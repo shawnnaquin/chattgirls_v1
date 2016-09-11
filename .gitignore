@@ -16,7 +16,8 @@ wp-content/plugins/hello.php
 /sitemap.xml
 /sitemap.xml.gz
 /node_modules
-
+.chattpass
+sftp-config.json
 
 wp-content/themes/FoundationPress/assets/components/
 wp-content/themes/FoundationPress/assets/javascript/foundation.js
