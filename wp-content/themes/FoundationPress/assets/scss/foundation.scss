@@ -19,7 +19,6 @@
 
 // Third-party libraries
 @import 'font-awesome';
-@import 'motion-ui';
 
 // Foundation global styles
 @include foundation-global-styles;
@@ -65,10 +64,6 @@
 @include foundation-float-classes;
 @include foundation-menu-icon;
 // @include foundation-flex-classes;
-
-// Motion UI
-@include motion-ui-transitions;
-@include motion-ui-animations;
 
 /*
   My custom styles:

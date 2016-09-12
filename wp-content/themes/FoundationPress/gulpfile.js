@@ -11,6 +11,7 @@ var colors      = require('colors');
 var dateFormat  = require('dateformat');
 var del         = require('del');
 var cleanCSS    = require('gulp-clean-css');
+var sftp        = require('gulp-sftp');
 
 // Enter URL of your local server here
 // Example: 'http://localwebsite.dev'
@@ -30,11 +31,9 @@ var COMPATIBILITY = [
 var PATHS = {
   sass: [
     'assets/components/foundation-sites/scss',
-    'assets/components/motion-ui/src',
     'assets/components/fontawesome/scss',
   ],
   javascript: [
-    'assets/components/what-input/what-input.js',
     'assets/components/foundation-sites/js/foundation.core.js',
     'assets/components/foundation-sites/js/foundation.util.*.js',
 
@@ -59,11 +58,7 @@ var PATHS = {
     'assets/components/foundation-sites/js/foundation.toggler.js',
     'assets/components/foundation-sites/js/foundation.tooltip.js',
 
-    // Motion UI
-    'assets/components/motion-ui/motion-ui.js',
-
-    // Include your own custom scripts (located in the custom folder)
-    'assets/javascript/custom/*.js',
+    'assets/javascript/app/**/*.js'
   ],
   phpcs: [
     '**/*.php',
@@ -104,7 +99,7 @@ gulp.task('browser-sync', ['build'], function() {
 
 // Compile Sass into CSS
 // In production, the CSS is compressed
-gulp.task('sass', function() {
+gulp.task('sass', ['clean:css'], function() {
   return gulp.src('assets/scss/foundation.scss')
     .pipe($.sourcemaps.init())
     .pipe($.sass({
@@ -121,12 +116,22 @@ gulp.task('sass', function() {
     .pipe($.if(isProduction, cleanCSS()))
     .pipe($.if(!isProduction, $.sourcemaps.write('.')))
     .pipe(gulp.dest('assets/stylesheets'))
+    .pipe(sftp({
+      host: 'chattanoogarollergirls.com',
+      remotePath: '/home3/chattan7/public_html/roux/wp-content/themes/FoundationPress/assets/stylesheets/',
+      auth: 'auth',
+      callback: function() {
+          return gulp.src('assets/stylsheets/**/*')
+            .pipe(browserSync.stream());
+      }
+    }))
     .pipe(browserSync.stream({match: '**/*.css'}));
+
 });
 
 // Lint all JS files in custom directory
 gulp.task('lint', function() {
-  return gulp.src('assets/javascript/custom/*.js')
+  return gulp.src('assets/javascript/app/**/*.js')
     .pipe($.jshint())
     .pipe($.notify(function (file) {
       if (file.jshint.success) {
@@ -144,7 +149,7 @@ gulp.task('lint', function() {
 
 // Combine JavaScript into one file
 // In production, the file is minified
-gulp.task('javascript', function() {
+gulp.task('javascript', ['clean:javascript'], function() {
   var uglify = $.uglify()
     .on('error', $.notify.onError({
       message: "<%= error.message %>",
@@ -160,26 +165,15 @@ gulp.task('javascript', function() {
     .pipe($.if(isProduction, uglify))
     .pipe($.if(!isProduction, $.sourcemaps.write()))
     .pipe(gulp.dest('assets/javascript'))
-    .pipe(browserSync.stream());
-});
-
-// Copy task
-gulp.task('copy', function() {
-  // Motion UI
-  var motionUi = gulp.src('assets/components/motion-ui/**/*.*')
-    .pipe($.flatten())
-    .pipe(gulp.dest('assets/javascript/vendor/motion-ui'));
-
-  // What Input
-  var whatInput = gulp.src('assets/components/what-input/**/*.*')
-      .pipe($.flatten())
-      .pipe(gulp.dest('assets/javascript/vendor/what-input'));
-
-  // Font Awesome
-  var fontAwesome = gulp.src('assets/components/fontawesome/fonts/**/*.*')
-      .pipe(gulp.dest('assets/fonts'));
-
-  return merge(motionUi, whatInput, fontAwesome);
+    .pipe(sftp({
+      host: 'chattanoogarollergirls.com',
+      remotePath: '/home3/chattan7/public_html/roux/wp-content/themes/FoundationPress/assets/javascript/',
+      auth: 'auth',
+      callback: function() {
+        return gulp.src('assets/javascript/foundation.js')
+          .pipe(browserSync.stream());
+      }
+    }))
 });
 
 // Package task
@@ -192,14 +186,6 @@ gulp.task('package', ['build'], function() {
   return gulp.src(PATHS.pkg)
     .pipe($.zip(title))
     .pipe(gulp.dest('packaged'));
-});
-
-// Build task
-// Runs copy then runs sass & javascript in parallel
-gulp.task('build', ['clean'], function(done) {
-  sequence('copy',
-          ['sass', 'javascript', 'lint'],
-          done);
 });
 
 // PHP Code Sniffer task
@@ -246,6 +232,8 @@ gulp.task('clean:css', function() {
     ]);
 });
 
+gulp.task('build', ['clean', 'sass', 'javascript', 'lint']);
+
 // Default gulp task
 // Run build task and watch for file changes
 gulp.task('default', ['build', 'browser-sync'], function() {
@@ -256,14 +244,15 @@ gulp.task('default', ['build', 'browser-sync'], function() {
   }
 
   // Sass Watch
-  gulp.watch(['assets/scss/**/*.scss'], ['clean:css', 'sass'])
+  gulp.watch(['assets/scss/**/*.scss', ], ['clean:css', 'sass',])
     .on('change', function(event) {
       logFileChange(event);
     });
 
   // JS Watch
-  gulp.watch(['assets/javascript/custom/**/*.js'], ['clean:javascript', 'javascript', 'lint'])
+  gulp.watch(['assets/javascript/app/**/*.js'], ['clean:javascript', 'javascript', 'lint' ])
     .on('change', function(event) {
       logFileChange(event);
     });
+
 });
