@@ -89,9 +89,9 @@ gulp.task('browser-sync', ['build'], function() {
           ];
 
   browserSync.init(files, {
+    injectChanges: true,
     // Proxy address
     proxy: URL,
-
     // Port #
     // port: PORT
   });
@@ -121,11 +121,9 @@ gulp.task('sass', ['clean:css'], function() {
       remotePath: '/home3/chattan7/public_html/roux/wp-content/themes/FoundationPress/assets/stylesheets/',
       auth: 'auth',
       callback: function() {
-          return gulp.src('assets/stylsheets/**/*')
-            .pipe(browserSync.stream());
+          browserSync.reload('assets/stylesheets/foundation.css');
       }
     }))
-    .pipe(browserSync.stream({match: '**/*.css'}));
 
 });
 
@@ -170,8 +168,7 @@ gulp.task('javascript', ['clean:javascript'], function() {
       remotePath: '/home3/chattan7/public_html/roux/wp-content/themes/FoundationPress/assets/javascript/',
       auth: 'auth',
       callback: function() {
-        return gulp.src('assets/javascript/foundation.js')
-          .pipe(browserSync.stream());
+          browserSync.reload('assets/javascript/foundation.js');
       }
     }))
 });
